@@ -1,0 +1,33 @@
+{
+    "name": "erag/laravel-cli-installer",
+    "description": "Laravel CLI tool to automate project setup and installation.",
+    "keywords": [
+        "laravel"
+
+    ],
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "LaravelCliInstaller\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "LaravelCliInstaller\\LaravelCliInstallerServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^11.0|^12.0",
+        "laravel/pint": "^1.13",
+        "laravel/prompts": "^0.3.7"
+    },
+    "scripts": {
+        "lint": "pint",
+        "lint-test": "pint --test",
+        "lint:dirty": "pint --dirty"
+    }
+}
