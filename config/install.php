@@ -1,9 +1,6 @@
 <?php
 
 return [
-
-    'install_title' => 'Laravel Application Install',
-
     'min_php_version' => '8.2.0',
 
     'requirements' => [
@@ -63,16 +60,6 @@ return [
             'required' => true,
             'rules' => 'required|min:6',
         ],
-
-        [
-            'type' => 'confirm',
-            'key' => 'password_confirmation',
-            'match' => 'password',
-            'label' => 'Confirm Password',
-            'required' => true,
-            'rules' => 'required',
-        ],
-
 
         [
             'type' => 'textarea',
