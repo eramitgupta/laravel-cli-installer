@@ -2,55 +2,76 @@ name: Lint Check
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  style:
+  pint:
+    name: Run Laravel Pint (Code Style)
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
 
     steps:
-      - name: Checkout code
+      # 1. Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup PHP
+      # 2. Setup PHP
+      - name: Setup PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, bcmath
-          tools: composer:v2
+          extensions: mbstring, pdo, json, bcmath
+          tools: composer
 
-      - name: Install Dependencies
-        run: composer install --no-scripts --no-interaction --prefer-dist
+      # 3. Install dependencies
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist
 
-      - name: Check code style with Pint
+      # 4. Install Pint (Global Fallback if missing)
+      - name: Ensure Pint Exists
         run: |
-          vendor/bin/pint --test || (echo "❌ Code style issues found" && vendor/bin/pint --verbose && exit 1)
+          if [ ! -f "vendor/bin/pint" ]; then
+            echo "⚠ Pint not found. Installing..."
+            composer require laravel/pint --dev
+          fi
 
-      - name: Add Lint Results as PR Comment
+      # 5. Run Pint Lint Test
+      - name: Run Pint Code Style Check
+        run: |
+          vendor/bin/pint --test || (
+            echo "❌ Code style issues found"
+            vendor/bin/pint --verbose
+            exit 1
+          )
+
+      # 6. Add PR Comment on Failure
+      - name: Add PR Comment on Failure
         if: github.event_name == 'pull_request' && failure()
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `
-            ## ⚠️ PHP Code Style Check Failed
+            ## ❌ Laravel Pint Code Style Issues
 
-            Please fix the code style issues found by Laravel Pint.
-            Run \`composer lint\` locally to fix automatically.
+            Laravel Pint found code formatting issues.
 
-            More info: https://laravel.com/docs/pint
+            👉 Run this locally to fix automatically:
+            \`\`\`
+            composer lint
+            \`\`\`
+
+            For more details, see Pint docs:
+            https://laravel.com/docs/pint
             `;
 
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
+              issue_number: context.issue.number,
               body: output
             })
