@@ -32,7 +32,6 @@
     },
     "scripts": {
         "lint": "pint",
-        "lint-test": "pint --test",
-        "lint:dirty": "pint --dirty"
+        "lint-test": "pint --test"
     }
 }
