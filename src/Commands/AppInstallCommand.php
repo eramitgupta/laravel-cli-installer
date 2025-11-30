@@ -15,20 +15,26 @@ class AppInstallCommand extends Command
     public function handle()
     {
         $this->info('🚀 Installing ERAG Laravel CLI Installer...');
+        $this->newLine();
 
-        $this->call('vendor:publish', [
-            '--tag' => 'erag:publish-cli--installer-config',
-            '--force' => true,
-        ]);
+        $configPath = config_path('install.php');
 
-        $this->info('✅ Config file published: config/install.php');
+        if (file_exists($configPath)) {
+            $this->warn('⚠ config/install.php already exists — skipping publish.');
+        } else {
 
-        $this->line('');
+            $this->info('📦 Publishing configuration...');
+            $this->call('vendor:publish', [
+                '--tag' => 'erag:publish-cli--installer-config',
+                '--force' => false,
+            ]);
+
+            $this->info('✅ Config file published: config/install.php');
+        }
+        $this->newLine();
+
         $this->info('📌 NEXT STEP: Update your installation settings in: config/install.php');
-        $this->line('');
-
-        $this->info('➡ After editing the config, run:');
-        $this->comment('php artisan erag:app-setup');
+        $this->newLine();
 
         $choice = select(
             label: 'Have you set up install.php? Do you want to run app-setup now?',
@@ -39,8 +45,7 @@ class AppInstallCommand extends Command
             $this->info('⚙ Running: php artisan erag:app-setup');
             $this->call('erag:app-setup');
         } else {
-            $this->info('❗ Okay, setup aborted. Run it later using: php artisan erag:app-setup');
+            $this->info('❗ Setup aborted. Run it later using: php artisan erag:app-setup');
         }
-
     }
 }
