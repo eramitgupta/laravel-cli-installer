@@ -107,49 +107,75 @@ class RequirementsCheckerService
         $examplePath = base_path('.env.example');
         $envPath = base_path('.env');
 
-        copy($examplePath, $envPath);
-    }
-
-    public function getEnvArrayFromExample(): array
-    {
-        $examplePath = base_path('.env.example');
-        $lines = file($examplePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-        $envArray = [];
-
-        foreach ($lines as $line) {
-            if (str_starts_with($line, '#')) {
-                continue;
-            }
-
-            if (str_contains($line, '=')) {
-                [$key, $value] = explode('=', $line, 2);
-                $envArray[$key] = trim($value, '"');
-            }
+        // Fresh Copy
+        if (File::exists($envPath)) {
+            File::delete($envPath);
         }
 
-        return $envArray;
+        sleep(1);
+
+        copy($examplePath, $envPath);
     }
 
     public function updateEnv(array $userData)
     {
         $envPath = base_path('.env');
 
-        // Step 1: Load default env values from .env.example
-        $defaultEnv = $this->getEnvArrayFromExample();
+        $lines = file($envPath, FILE_IGNORE_NEW_LINES);
+        $newLines = [];
+        $added = [];
 
-        // Step 2: Replace default values with user input values
-        foreach ($userData as $key => $value) {
-            $defaultEnv[$key] = $value;
+        foreach ($lines as $line) {
+
+            $trim = trim($line);
+
+            if ($trim === '' || str_starts_with($trim, '#')) {
+
+                // commented key
+                if (str_starts_with($trim, '#') && str_contains($trim, '=')) {
+
+                    $commentKey = trim(substr($trim, 1));
+                    [$key, $val] = explode('=', $commentKey, 2);
+
+                    $newLines[] = $line;
+
+                    if (array_key_exists($key, $userData) && ! isset($added[$key])) {
+                        $newLines[] = $key.'="'.$userData[$key].'"';
+                        $added[$key] = true;
+                    }
+
+                    continue;
+                }
+
+                $newLines[] = $line;
+
+                continue;
+            }
+
+            if (str_contains($line, '=')) {
+
+                [$key, $value] = explode('=', $line, 2);
+
+                if (array_key_exists($key, $userData)) {
+
+                    if ($key === 'APP_KEY') {
+                        $newLines[] = $key.'=';
+                    } else {
+                        $newLines[] = $key.'="'.$userData[$key].'"';
+                    }
+
+                    $added[$key] = true;
+
+                    continue;
+                }
+            }
+
+            $newLines[] = $line;
         }
 
-        // Step 3: Write final .env content
-        $envContent = '';
-        foreach ($defaultEnv as $key => $value) {
-            $envContent .= $key.'="'.$value.'"'."\n";
-        }
+        file_put_contents($envPath, implode("\n", $newLines));
 
-        file_put_contents($envPath, $envContent);
+        sleep(1);
     }
 
     public function checkDatabaseConnection($dbConnection, $dbHost, $dbPort, $dbName, $dbUser, $dbPassword): bool
@@ -172,6 +198,7 @@ class RequirementsCheckerService
 
         try {
             DB::connection($dbConnection)->getPdo();
+
             return true;
         } catch (Exception $e) {
             return false;
