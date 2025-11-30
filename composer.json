@@ -29,9 +29,5 @@
         "ext-json": "*",
         "ext-pdo": "*",
         "ext-mbstring": "*"
-    },
-    "scripts": {
-        "lint": "pint",
-        "lint-test": "pint --test"
     }
 }
